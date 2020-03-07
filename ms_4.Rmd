@@ -1,0 +1,74 @@
+---
+title: "ms4.Rmd"
+author: "Scott"
+date: "3/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(rvest)
+library(xml2)
+library(readxl)
+library(janitor)
+```
+```{r load in wins}
+
+# Right now, I'm working on finding a more efficient way to grab data from
+# certain websites. As of right now, it takes a lot of manual effort to scrape
+# the data from websites because the data that I want together is all on
+# separate links and I don't want to have to load in 30 datasets for the 30
+# teams. Hopefully, we can find a quicker and easier way to do this. In this
+# milestone, I have significantly changed my data set. I have made it a lot
+# easier to read and manipulate — After tying to mess around with the previous
+# one, I figured out how to join tables more efficiently and in the way I wanted
+# by tidying them. Then, I was able to begin to plot several variables vs. the
+# number of wins.
+
+wins1 <- read_excel("raw-data/wins.xlsx") %>%
+  filter(!is.na(ABBR))
+ wins <- wins1 %>%
+  pivot_longer(-ABBR, names_to = "year", values_to = "wins")
+
+```
+```{r load in batting average}
+battingaverage1 <- read_excel("raw-data/MLBbattingaverage.xlsx") 
+ battingaverage <- battingaverage1 %>%
+   select (-Name) %>%
+  pivot_longer(-ABBR, names_to = "year", values_to = "battingaverage") 
+```
+```{r load in errors}
+errors1 <- read_excel("raw-data/MLBerrors.xlsx")
+errors <- errors1 %>%
+   select (-Team) %>%
+  pivot_longer(-ABBR, names_to = "year", values_to = "errors") 
+```
+```{r join tables}
+joined <- wins %>%
+  full_join (battingaverage, by = c("ABBR" = "ABBR", "year" = "year")) %>%
+  full_join(errors, by = c("ABBR" = "ABBR", "year" = "year")) 
+```
+So far, I have loaded in 3 different data sets. Hopefully, Alyssa and I can find a way to loop through other websites to find an easier way to get data from different htmls rather thasn having to copy and paste it into an excel or having to load in each and every webpage. With the data right now, I spent a good amount of time tyding it so that it is easier to manipulate. Now, it is visually easier to understand and easier to use. I have begun to graph different variables but am still playing around with better ways to visually highlight things. As of right now. The graphs are contained solely to 2019, but I want to begin to expand to other years and add new variables once I get new data sets. Also, I want to be able to separate stats by teams throughout time, but now that I figure out how to best use my data and organize it, things seem to be getting easier to visualize. We can already see trends on the two graphs I have made. I found this data on MLB websites and am continuing to look for more. 
+
+
+
+```{r graph errors}
+joined %>%
+  filter (year == "2019") %>%
+  ggplot(aes(x = errors, y = wins, color = ABBR)) +
+    geom_point() +
+  labs(x = "errors", y = "wins", 
+      title = "Wins vs Errors in 2019") 
+```
+```{r graph batting average}
+joined %>%
+  filter (year == "2019") %>%
+  ggplot(aes(x = battingaverage, y = wins, color = ABBR)) +
+    geom_point() +
+  labs(x = "batting average", y = "wins", 
+      title = "Wins vs Batting Average in 2019") 
+
+```
+
+
